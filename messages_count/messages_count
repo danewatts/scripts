@@ -1,0 +1,46 @@
+MESSAGES_FILE=~/messages_duplicated.txt
+
+if [ -z "$1" ]; then
+    echo "Please pass in a file: ./messages_count foo.txt"
+    exit 1
+fi
+if [ ! -f "$1" ]; then
+    echo "File [$1] not found"
+    exit 1
+fi
+#don't touch the original file
+cp $1 $MESSAGES_FILE
+
+
+#REMOVING BLANK LINES
+sed -i '/^$/d' $MESSAGES_FILE
+#remove all lines starting with hash
+sed -i '/^#/ d' $MESSAGES_FILE
+#remove all between {}
+sed -i 's/{[^}]*}/ /g' $MESSAGES_FILE
+#remove all between <> 
+sed -i 's/<[^>]*>/ /g' $MESSAGES_FILE
+#count number of messages - Only if the messages file creates using =
+NO_MESSAGES=$(fgrep -o = $MESSAGES_FILE | wc -l)
+#remove all before equals - must be after removing html
+sed -i 's/.*=//' $MESSAGES_FILE
+#remove anything not aA-zZ
+sed -i 's/[^a-zA-Z]/ /g' $MESSAGES_FILE
+#replace all spaces (multi) with single space
+sed -i 's/ \+/ /g' $MESSAGES_FILE
+#remove leading spaces
+sed -i 's/^[ \t]*//g' $MESSAGES_FILE
+#count number of words
+NO_WORDS=$(wc -w $MESSAGES_FILE)
+#remove all spaces
+sed -i 's/[ ]*//g' $MESSAGES_FILE
+#remove all line breaks
+sed -i ':a;N;$!ba;s/\n//g' $MESSAGES_FILE
+#counter number of characters
+CHAR_COUNT=$(wc -m $MESSAGES_FILE)
+#PRINT
+echo "WORD COUNT = $NO_WORDS"
+echo "CHARACTER COUNT WITHOUT SYMBOLS OR SPACES = $CHAR_COUNT"
+echo "NUMBER OF MESSAGES = $NO_MESSAGES"
+#remove fake file after print
+rm -f $MESSAGES_FILE

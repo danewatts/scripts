@@ -1,0 +1,66 @@
+#!/bin/bash
+SERVICE=$1
+SM_NAME=$(echo $SERVICE | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+SM_CONFIG=$WORKSPACE/service-manager-config/services.json
+APP_FOLDER=$WORKSPACE/$SERVICE
+HELP="Usage: start-service [SERVICE]...[OPTION(S)] [OPTION VALUE]...\nStart-service is used to start microservices locally on the correct port.\nStart-service uses service-manager-config to identify the correct port to start the service using SBT.\nWORKSPACE must be setup and must contain 'service-manager-config'\n\nOptions:\n  -h, --help\t\t\tDisplays this help page\n  -a, --arguments\t\tRuns the service with the service manager configured binary arguments\n  -ca, --custom-arguments\tAllows custom arugments to be passed into the sbt run command.\n\nExample usage: start-local my-service -a -ca \"-Dcustom.arg=dimension1\""
+OPTIONS=""
+
+if [ $SERVICE == "-h" ] || [ $SERVICE == "--help" ]; then
+  echo -e $HELP
+  exit 0
+fi
+
+#VALIDATION
+if [[ ! -f $SM_CONFIG ]]; then
+  echo $SM_CONFIG does not exist
+  exit 1
+fi
+SERVICE_JSON=$(cat $SM_CONFIG | jq -r ".$SM_NAME")
+if [[ $SERVICE_JSON == "null" ]]; then 
+  echo $SM_NAME does not exist in service-manager-config/services.jsons
+  exit 1
+fi
+PORT=$(echo $SERVICE_JSON | jq -r ".defaultPort")
+
+#ARG PROCESSING
+shift
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    -a | --arguments)
+      OPTIONS=$OPTIONS$(cat $SM_CONFIG | jq -r ".$SM_NAME.binary.cmd[]" | grep "\-D" | tr "\n" " "; echo)
+      shift;;
+    -ca | --custom-arguments)
+    #TODO check option exists
+      OPTIONS="$OPTIONS $2"
+      echo $OPTIONS
+      exit 0;;
+    -h | --help)
+      echo -e $HELP
+      exit 0;;
+    -*)
+      echo "Unknown command: $key. Try 'start-local --help' for more information"
+      exit 1;;
+    *) echo 
+      "Unknown argument: $key. Try 'start-local --help' for more information"
+      exit 1;;
+  esac
+done
+
+#DEF
+sm --stop $SM_NAME
+if [[ ! -d "$APP_FOLDER/.git" ]]; then
+  echo "$SERVICE has not been downloaded from git. Would you like to clone the repo from git?"
+  if __getUserBoolean; then 
+    cd $WORKSPACE
+    GIT_SSH=$(echo $SERVICE_JSON | jq -r ".sources.repo")
+    clone $GIT_SSH
+  fi
+fi
+cd $APP_FOLDER
+sbt "run $PORT $OPTIONS"
+
+#TODO lookup map for shortend names for service
+#TODO allow branch switch
+#TODO handle SERVICE being passed as upper
