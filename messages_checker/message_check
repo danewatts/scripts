@@ -79,9 +79,10 @@ function run {
         fi
     done
 
-    printf "Missing messages:\n ${RED}$MISSING_MESSAGES${NC}" | sed -e $'s/,/\\\n/g'
-    echo ""
     echo "Ignored messgae prefixes: ${IGNORE_PREFIX[*]}"
+    echo ""
+    printf "Missing messages:\n ${RED}$MISSING_MESSAGES${NC}" | sed -e $'s/,/\\\n/g'
+    
     printf "$FAILED_MESSAGE_COUNT missing out of $MESSAGE_COUNT messages\n\n\n"
 
     rm -f $MESSAGES_FILE
