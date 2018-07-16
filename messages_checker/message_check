@@ -7,7 +7,7 @@ SRC="$APPLICATION_FOLDER/target/scala-2.11/twirl/main"
 MESSAGE_COUNT=0
 IGNORE_PREFIX=()
 RUN_WELSH=false
-HELP="Usage: message_check.sh [DIRECTORY]...[OPTION(S)] [OPTION VALUE]...\nMessage check is setup for PLAY Frontend projects to count the number of message keys that are missing from the HTML. The directory provided must be the directory of your application.\nThe original message file must be present in 'conf/messages' and the service must be compiled where the html is stored in 'target/scala-2.11/twirl/main'\n\nOptions:\n  -h, --help\t\tDisplays this help page\n  -i, --ignore\t\tConfigures messages to ignore which start with a given prefix. Passing '--ignore dynamic.key' would ignore all messages that start with 'dynamic.key' from the list of missing messages\n  -w, --welsh\t\tConfigures script to run again for the welsh messages file. The file must be named 'messages.cy'\n  -nc, --no-colour\tConfigures script to run without colour output\n\nExample usage: 'message_check ~/my_service --ignore dynamic.message --ignore error.message'"
+HELP="Usage: message_check.sh [DIRECTORY]...[OPTION(S)] [OPTION VALUE]...\nMessage check is setup for PLAY Frontend projects with TWIRL to count the number of message keys that are missing from the HTML. The directory provided must be the directory of your application.\nThe original message file must be present in 'conf/messages' and the service must be compiled where the html is stored in 'target/scala-2.11/twirl/main'\n\nOptions:\n  -h, --help\t\tDisplays this help page\n  -i, --ignore\t\tConfigures messages to ignore which start with a given prefix. Passing '--ignore dynamic.key' would ignore all messages that start with 'dynamic.key' from the list of missing messages\n  -w, --welsh\t\tConfigures script to run again for the welsh messages file. The file must be named 'messages.cy'\n  -nc, --no-colour\tConfigures script to run without colour output\n\nExample usage: 'message_check ~/my_service --ignore dynamic.message --ignore error.message'"
 #COLORS
 RED='\033[0;31m'
 NC='\033[0m' # No Color
@@ -24,6 +24,11 @@ fi
 
 if [ ! -d "$APPLICATION_FOLDER" ]; then
     echo "Folder [$APPLICATION_FOLDER] not found"
+    exit 1
+fi
+
+if [ ! -d "$SRC" ]; then
+    echo "$APPLICATION_FOLDER is not compiled with twirl sources"
     exit 1
 fi
 
