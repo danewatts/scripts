@@ -9,15 +9,15 @@ OPTIONS=""
 
 printf "\e]2;start-local - $SERVICE\a"
 
+if [ $SERVICE == "-h" ] || [ $SERVICE == "--help" ]; then
+  echo -e $HELP
+  exit 0
+fi
+
 if !(hash jq 2>/dev/null); then
   echo "Failed: jq is not installed. This script uses jq for JSON parsing."
   echo "See: https://stedolan.github.io/jq/"
   exit 1
-fi
-
-if [ $SERVICE == "-h" ] || [ $SERVICE == "--help" ]; then
-  echo -e $HELP
-  exit 0
 fi
 
 #VALIDATION
