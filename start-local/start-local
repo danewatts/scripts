@@ -4,7 +4,8 @@ SERVICE=$(echo $1 | tr '[:upper:]' '[:lower:]' | tr '_' '-')
 SM_NAME=$(echo $SERVICE | tr '[:lower:]' '[:upper:]' | tr '-' '_')
 SM_CONFIG=$WORKSPACE/service-manager-config/services.json
 APP_FOLDER=$WORKSPACE/$SERVICE
-HELP="Usage: start-service [SERVICE]...[OPTION(S)] [OPTION VALUE]...\nStart-service is used to start microservices locally on the correct port.\nStart-service uses service-manager-config to identify the correct port to start the service using SBT.\nWORKSPACE must be setup and must contain 'service-manager-config'\n\nOptions:\n  -h, --help\t\t\tDisplays this help page\n  -a, --arguments\t\tRuns the service with the service manager configured binary arguments\n  -ca, --custom-arguments\tAllows custom arugments to be passed into the sbt run command.\n\nExample usage: start-local my-service -a -ca \"-Dcustom.arg=dimension1 -Dcustom.arg2=dimension2\""
+HELP="Usage: start-service [SERVICE]...[OPTION(S)] [OPTION VALUE]...\nStart-service is used to start microservices locally on the correct port.\nStart-service uses service-manager-config to identify the correct port to start the service using SBT.\nWORKSPACE must be setup and must contain 'service-manager-config'\n\nOptions:\n  -h, --help\t\t\tDisplays this help page\n  -a, --arguments\t\tRuns the service with the service manager configured binary arguments\n  -ca, --custom-arguments\tAllows custom arugments to be passed into the sbt run command.\n  -d, --debug\t\t\tStarts the service with -jvm-debug option on port 5005.\n\nExample usage: start-local my-service -a -ca \"-Dcustom.arg=dimension1 -Dcustom.arg2=dimension2\""
+RUN_OPTIONS=""
 OPTIONS=""
 
 printf "\e]2;start-local - $SERVICE\a"
@@ -38,15 +39,18 @@ while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
     -a | --arguments)
-      OPTIONS="$OPTIONS $(cat $SM_CONFIG | jq -r ".$SM_NAME.binary.cmd[]" | grep "\-D" | tr "\n" " "; echo)"
+      RUN_OPTIONS="$RUN_OPTIONS $(cat $SM_CONFIG | jq -r ".$SM_NAME.binary.cmd[]" | grep "\-D" | tr "\n" " "; echo)"
       shift;;
     -ca | --custom-arguments)
       if [ -z $2 ] || [[ $2 == -* && ! $2 == -D* ]]; then
         echo "Unrecognised custom argument: $2"
         exit 1
       fi
-      OPTIONS="$OPTIONS $2"
+      RUN_OPTIONS="$RUN_OPTIONS $2"
       shift
+      shift;;
+    -d | --debug)
+      OPTIONS="$OPTIONS -jvm-debug 5005"
       shift;;
     -h | --help)
       echo -e $HELP
@@ -75,7 +79,7 @@ if [[ ! -d "$APP_FOLDER/.git" ]]; then
   esac
 fi
 cd $APP_FOLDER
-sbt "run $PORT $OPTIONS"
+sbt $OPTIONS "run $PORT $RUN_OPTIONS"
 
 #TODO lookup map for shortend names for service
 #TODO allow branch switch
